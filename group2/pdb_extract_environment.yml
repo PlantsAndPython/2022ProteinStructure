@@ -1,0 +1,9 @@
+name: pdb_extract
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - biopython=1.79
+  - joblib=1.2.0
+  - numpy=1.20.3
+  - python=3.9
