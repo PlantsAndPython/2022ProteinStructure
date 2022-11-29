@@ -58,27 +58,10 @@ for IDs in XRAY:
     
     #write to a txt file
     with open(r'C:\Users\cozyb\OneDrive\Documents\Grad School\PlantsPython\found_IDs.txt', 'w') as fp:
-        for IDs in found_IDs:
+        for IDs in results:
             fp.write("%s\n" % IDs)
             print('Done')
     break
     
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
 
 
