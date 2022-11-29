@@ -1,8 +1,8 @@
 from os.path import join
 from pathlib import Path
+from glob import glob
 
 import numpy as np
-from glob import glob
 from joblib import Parallel, delayed
 from Bio import SeqIO
 from Bio.PDB.PDBParser import PDBParser
@@ -22,14 +22,23 @@ def extract_coords_and_seq(pdb_path, output_dir):
     pdb_id = Path(pdb_path).stem
 
     # Load the PDB file
+    # 'pdb-seqres' extracts the SEQRES values in the PDB file
+    # Source: https://biopython.org/docs/1.75/api/Bio.SeqIO.PdbIO.html
     seq_io = SeqIO.parse(pdb_path, 'pdb-seqres')
+
+    # How to read PDB files with Biopython:
+    # http://biopython.org/DIST/docs/tutorial/Tutorial.html#sec182
     parser = PDBParser()
     structure = parser.get_structure(pdb_id, pdb_path)
 
     all_coords = {}
     seqs = []
-    # Note: Biopython considers a PDB file to contain to following as nested objects:
-    # models -> chains -> residues -> atoms
+    # Note: Biopython considers a PDB file to contain the following as nested objects:
+    # structure -> models -> chains -> residues -> atoms
+    # Source: http://biopython.org/DIST/docs/tutorial/Tutorial.html#sec193
+    #
+    # Additional examples for navigating through Biopython's Structure object:
+    # http://biopython.org/DIST/docs/tutorial/Tutorial.html#sec210
     for model in structure.get_list():
         for chain, record in zip(model.get_list(), seq_io):
             chain_coords = []
@@ -48,6 +57,10 @@ def extract_coords_and_seq(pdb_path, output_dir):
                 all_coords[str(model.get_id())] = {str(chain.get_id()):chain_coords}
                 seqs.append(record)
 
+                # The 'dbxrefs' variable appears to contain cross-reference values that were
+                # extracted from the PDB file. UNP stands for Uniprot.
+                print('Database cross-reference values:', record.dbxrefs)
+
     # Atomic coords. are stored as:
     # {model ID: {chain ID:np.array([atom, (x,y,z)])}}
     np.savez(join(output_dir, 'coordinates', f'{pdb_id}_c_alphas.npz'), **all_coords, )
@@ -65,9 +78,9 @@ pdb_paths = glob(join(PDB_DIR, '*.pdb'))
 
 output_dir = join('Project', 'outputs')
 
-# Using this flag to process PDB files:
-#   True: serial -> easier debugging
-#   False: parallel -> faster runtime
+# Use this flag to process PDB files:
+#   True: in serial -> easier debugging
+#   False: in parallel -> faster runtime if multiple cores are available
 TESTING = False
 
 if TESTING:
@@ -76,5 +89,8 @@ if TESTING:
 else:
     # Set the number of processes to use
     n_proc = min(len(pdb_paths), 20)
+
+    # Background and examples of embarrassingly parallel (AKA pleasantly parallel) for loops with
+    # Joblib: https://joblib.readthedocs.io/en/latest/parallel.html#common-usage
     Parallel(n_jobs=n_proc)(delayed(extract_coords_and_seq)(pdb_path, output_dir)\
         for pdb_path in pdb_paths)
