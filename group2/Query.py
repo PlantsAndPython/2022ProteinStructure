@@ -60,7 +60,6 @@ for IDs in XRAY:
     with open(r'C:\Users\cozyb\OneDrive\Documents\Grad School\PlantsPython\found_IDs.txt', 'w') as fp:
         for IDs in results:
             fp.write("%s\n" % IDs)
-            print('Done')
     break
     
 
